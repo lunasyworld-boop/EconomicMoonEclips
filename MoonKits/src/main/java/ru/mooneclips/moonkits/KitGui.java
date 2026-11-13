@@ -161,8 +161,12 @@ public final class KitGui implements Listener {
         if (raw >= 54) {
             if (event.isShiftClick() && event.getCurrentItem() != null && !event.getCurrentItem().getType().isAir()) {
                 event.setCancelled(true);
-                int empty = event.getView().getTopInventory().firstEmpty();
-                if (empty >= 0 && empty < 45) {
+                int empty = -1;
+                for (int slot = 0; slot < 45; slot++) {
+                    ItemStack existing = event.getView().getTopInventory().getItem(slot);
+                    if (existing == null || existing.getType().isAir()) { empty = slot; break; }
+                }
+                if (empty >= 0) {
                     event.getView().getTopInventory().setItem(empty, event.getCurrentItem().clone());
                     event.setCurrentItem(null);
                 }
