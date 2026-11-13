@@ -39,12 +39,14 @@ public final class AuctionManager implements Listener {
     private final EconomicMoonEclips plugin;
     private final Economy economy;
     private final NamespacedKey listingKey;
+    private final FileConfiguration auctionConfig;
     private Connection connection;
 
     public AuctionManager(EconomicMoonEclips plugin, Economy economy) {
         this.plugin = plugin;
         this.economy = economy;
         this.listingKey = new NamespacedKey(plugin, "auction_listing");
+        this.auctionConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "auction.yml"));
         openDatabase();
         Bukkit.getPluginManager().registerEvents(this, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, this::expireListings, 1200L, 1200L);
