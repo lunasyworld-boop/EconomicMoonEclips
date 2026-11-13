@@ -168,13 +168,14 @@ public final class SellManager {
                 if (slot == 22) { player.closeInventory(); return; }
                 int index = (slot - 10) / 2;
                 if (slot >= 10 && slot <= 16 && (slot - 10) % 2 == 0 && index < prices.size()) {
-                    openCategory(player, new ArrayList<>(prices.keySet()).get(index));
+                    String selected = new ArrayList<>(prices.keySet()).get(index);
+                    if (selected.equals("miscellaneous")) traderManager.open(player);
+                    else openCategory(player, selected);
                 }
                 return;
             }
             if (holder.id.startsWith("category:")) {
                 String category = holder.id.substring("category:".length());
-                if (category.equals("miscellaneous")) { traderManager.open(player); return; }
                 if (slot == 49) { openMain(player); return; }
                 ItemStack clicked = event.getCurrentItem();
                 if (clicked == null || clicked.getType().isAir()) return;
