@@ -87,8 +87,8 @@ public final class SellManager {
         if (args.length == 0) { openMain(player); return; }
         if (!args[0].equalsIgnoreCase("all")) { player.sendMessage(msg("&cИспользование: /sell [all [confirm]]")); return; }
         if (args.length == 1) {
-            pendingConfirmations.put(player.getUniqueId(), System.currentTimeMillis() + 15_000);
-            player.sendMessage(msg("&eПовтори &f/sell all confirm &eв течение 15 секунд для подтверждения."));
+            pendingConfirmations.put(player.getUniqueId(), System.currentTimeMillis() + plugin.getConfig().getLong("settings.sell-all-confirmation-seconds", 15) * 1000L);
+            player.sendMessage(msg("&eПовтори &f/sell all confirm &eв течение " + plugin.getConfig().getLong("settings.sell-all-confirmation-seconds", 15) + " секунд для подтверждения."));
             return;
         }
         if (args.length == 2 && args[1].equalsIgnoreCase("confirm")) {
@@ -105,7 +105,7 @@ public final class SellManager {
                 if (stack == null || stack.getType().isAir()) continue;
                 Double unit = findPrice(stack.getType());
                 if (unit == null) continue;
-                double multiplier = isGoldDrop(stack) ? 3.0 : rankMultiplier(player);
+                double multiplier = isGoldDrop(stack) ? goldMultiplier() : rankMultiplier(player);
                 total += unit * stack.getAmount() * multiplier;
                 count += stack.getAmount();
                 contents[i] = null;
@@ -149,7 +149,7 @@ public final class SellManager {
         item.setItemMeta(meta);
     }
 
-    private boolean isGoldDrop(ItemStack item) {
+    private double goldMultiplier() {\n        return plugin.getConfig().getDouble("settings.gold-mob-drop-multiplier", 3.0);\n    }\n\n    private boolean isGoldDrop(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         return meta != null && meta.getPersistentDataContainer().has(goldDropKey, PersistentDataType.BYTE);
     }
