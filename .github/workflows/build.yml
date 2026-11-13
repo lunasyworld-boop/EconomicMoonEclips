@@ -1,7 +1,7 @@
 name: Build plugin
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/economicmooneclips-1.8.0" ]
   workflow_dispatch:
 permissions:
   contents: read
