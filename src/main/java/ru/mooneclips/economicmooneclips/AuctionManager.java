@@ -255,7 +255,12 @@ public final class AuctionManager implements Listener {
             buyer.sendMessage(msg("&cНедостаточно денег."));
             return;
         }
+
         boolean debited = false;
+        boolean credited = false;
+        OfflinePlayer seller = Bukkit.getOfflinePlayer(UUID.fromString(listing.sellerUuid));
+        double fee = listing.price * auctionConfig.getDouble("auction.commission-percent", 1.2) / 100.0;
+        double sellerNet = listing.price - fee;
         try {
             if (!setStatus(id, "ACTIVE", "SOLD")) {
                 buyer.sendMessage(msg("&cЛот уже куплен или снят."));
@@ -268,30 +273,38 @@ public final class AuctionManager implements Listener {
                 return;
             }
             debited = true;
-            double fee = listing.price * auctionConfig.getDouble("auction.commission-percent", 1.2) / 100.0;
-            OfflinePlayer seller = Bukkit.getOfflinePlayer(UUID.fromString(listing.sellerUuid));
-            EconomyResponse credit = economy.depositPlayer(seller, listing.price - fee);
+
+            EconomyResponse credit = economy.depositPlayer(seller, sellerNet);
             if (!credit.transactionSuccess()) {
-                economy.depositPlayer(buyer, listing.price);
-                debited = false;
-                setStatus(id, "SOLD", "ACTIVE");
+                EconomyResponse refund = economy.depositPlayer(buyer, listing.price);
+                debited = !refund.transactionSuccess();
+                if (!debited) setStatus(id, "SOLD", "ACTIVE");
                 buyer.sendMessage(msg("&cНе удалось перечислить деньги продавцу. Покупка отменена."));
                 return;
             }
+            credited = true;
+
             deliver(buyer, listing.item);
             debited = false;
+            credited = false;
             buyer.sendMessage(msg("&aПокупка успешна: &f" + listing.item.getType()
                     + " &7за &b" + money(listing.price) + "$"));
             if (seller.isOnline() && seller.getPlayer() != null) {
                 seller.getPlayer().sendMessage(msg("&aТвой лот куплен. Получено: &b"
-                        + money(listing.price - fee) + "$ &7(комиссия 1.2%)."));
+                        + money(sellerNet) + "$ &7(комиссия 1.2%)."));
             }
         } catch (Exception ex) {
+            boolean rollbackOk = true;
+            if (credited) {
+                EconomyResponse reversal = economy.withdrawPlayer(seller, sellerNet);
+                rollbackOk = reversal.transactionSuccess() && rollbackOk;
+            }
             if (debited) {
                 EconomyResponse refund = economy.depositPlayer(buyer, listing.price);
-                if (!refund.transactionSuccess()) plugin.getLogger().severe("Auction buyer refund failed for listing " + id);
-                setStatus(id, "SOLD", "ACTIVE");
+                rollbackOk = refund.transactionSuccess() && rollbackOk;
             }
+            if (rollbackOk) setStatus(id, "SOLD", "ACTIVE");
+            else plugin.getLogger().severe("Auction rollback incomplete for listing " + id);
             plugin.getLogger().severe("Auction purchase failed for listing " + id + ": " + ex.getMessage());
             buyer.sendMessage(msg("&cОшибка покупки. Обратись к администрации."));
         }
