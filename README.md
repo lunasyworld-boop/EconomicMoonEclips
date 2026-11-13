@@ -34,3 +34,9 @@ Only entries in `prices.yml` can be sold. Raw ores and resource blocks are exclu
 
 ## Release status
 This is still a development build. A successful Maven build only confirms compilation; the auction's restart/disconnect and transaction edge cases, economy integration, GUI behavior and all gameplay flows must still be tested on a Paper 1.21.4 test server before production use.
+
+
+## Version 1.8.0
+- Removed golden mob effects and bonus mob drops.
+- Added persistent random trader with independent buy/sell stock refreshes every two hours.
+- Fixed auction GUI handling and added SQLite indexes; cached top balances for 30 seconds.
