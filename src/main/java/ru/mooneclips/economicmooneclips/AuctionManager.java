@@ -86,6 +86,7 @@ public final class AuctionManager implements Listener {
                 player.sendMessage(msg("&eИспользование: &f/ah sell <цена>"));
                 return;
             }
+            player.closeInventory();
             createListing(player, args[1]);
             return;
         }
@@ -509,6 +510,7 @@ public final class AuctionManager implements Listener {
         event.setCancelled(true);
         if (event.getClickedInventory() != event.getView().getTopInventory()) return;
         int slot = event.getRawSlot();
+        if (slot < 0 || slot >= event.getView().getTopInventory().getSize()) return;
         if (slot >= 0 && slot <= 8) {
             open(player, CATEGORIES[slot], holder.search, holder.sort, 0);
             return;
