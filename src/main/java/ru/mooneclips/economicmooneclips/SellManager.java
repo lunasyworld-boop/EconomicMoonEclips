@@ -149,7 +149,11 @@ public final class SellManager {
         item.setItemMeta(meta);
     }
 
-    private double goldMultiplier() {\n        return plugin.getConfig().getDouble("settings.gold-mob-drop-multiplier", 3.0);\n    }\n\n    private boolean isGoldDrop(ItemStack item) {
+    private double goldMultiplier() {
+        return plugin.getConfig().getDouble("settings.gold-mob-drop-multiplier", 3.0);
+    }
+
+    private boolean isGoldDrop(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         return meta != null && meta.getPersistentDataContainer().has(goldDropKey, PersistentDataType.BYTE);
     }
