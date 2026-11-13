@@ -1,12 +1,16 @@
-duration-hours: 128
-commission-percent: 1.2
-default-slots: 6
-rank-slots:
-  stone: 6
-  silver: 7
-  gold: 8
-  diamond: 9
-  crystal: 10
-  eclipse: 11
-storage:
-  file: "auction-data.yml"
+auction:
+  duration-hours: 128
+  commission-percent: 1.2
+  database-file: auction.db
+  default-sort: newest
+  allow-self-purchase: false
+  categories:
+    all: "&fВсе лоты"
+    weapons_tools: "&cОружие и инструменты"
+    armor: "&bБроня"
+    ores_resources: "&eРуды и ресурсы"
+    building_blocks: "&6Строительные блоки"
+    food: "&aЕда"
+    potions: "&dЗелья"
+    rare_items: "&5Редкие предметы"
+    miscellaneous: "&7Разное"
