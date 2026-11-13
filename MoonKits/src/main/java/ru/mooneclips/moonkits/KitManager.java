@@ -27,6 +27,7 @@ public final class KitManager {
         cooldownsFile = new File(plugin.getDataFolder(), "cooldowns.yml");
         statesFile = new File(plugin.getDataFolder(), "player-state.yml");
         reload();
+        ensureDefaultKits();
     }
 
     public synchronized void reload() {
@@ -41,7 +42,7 @@ public final class KitManager {
             String path = "kits." + id + ".";
             List<ItemStack> items = new ArrayList<>();
             for (Object value : kitsYaml.getList(path + "items", Collections.emptyList())) {
-                if (value instanceof ItemStack item && !item.getType().isAir()) items.add(item.clone());
+                items.add(value instanceof ItemStack item && !item.getType().isAir() ? item.clone() : null);
             }
             kits.put(id.toLowerCase(Locale.ROOT), new Kit(
                     id.toLowerCase(Locale.ROOT),
@@ -51,6 +52,25 @@ public final class KitManager {
                     kitsYaml.getBoolean(path + "automatic-delivery", true),
                     items
             ));
+        }
+    }
+
+    private void ensureDefaultKits() {
+        Map<String, String> defaults = new LinkedHashMap<>();
+        defaults.put("eclipse", "&5&lECLIPSE");
+        defaults.put("crystal", "&b&lCRYSTAL");
+        defaults.put("diamond", "&3&lDIAMOND");
+        defaults.put("gold", "&6&lGOLD");
+        defaults.put("silver", "&7&lSILVER");
+        defaults.put("stone", "&8&lSTONE");
+        for (Map.Entry<String, String> entry : defaults.entrySet()) {
+            if (getKit(entry.getKey()) == null) {
+                Kit kit = createKit(entry.getKey());
+                if (kit != null) {
+                    kit.setDisplayName(entry.getValue());
+                    saveKit(kit);
+                }
+            }
         }
     }
 
@@ -89,12 +109,11 @@ public final class KitManager {
     public boolean canFit(Player player, Kit kit) {
         Inventory simulation = Bukkit.createInventory(null, 36);
         simulation.setContents(player.getInventory().getStorageContents());
-        Map<Integer, ItemStack> leftovers = simulation.addItem(kit.getItems().toArray(new ItemStack[0]));
-        return leftovers.isEmpty();
+        return simulation.addItem(kit.getNonEmptyItems().toArray(new ItemStack[0])).isEmpty();
     }
 
     public boolean deliver(Player player, Kit kit, boolean ignoreCooldown) {
-        if (kit == null || kit.getItems().isEmpty()) {
+        if (kit == null || kit.getNonEmptyItems().isEmpty()) {
             player.sendMessage(plugin.msg("kit-not-found"));
             return false;
         }
@@ -107,7 +126,7 @@ public final class KitManager {
             player.sendMessage(plugin.msg("inventory-full"));
             return false;
         }
-        player.getInventory().addItem(kit.getItems().toArray(new ItemStack[0]));
+        player.getInventory().addItem(kit.getNonEmptyItems().toArray(new ItemStack[0]));
         setCooldown(player.getUniqueId(), kit);
         return true;
     }
