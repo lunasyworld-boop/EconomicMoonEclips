@@ -23,9 +23,9 @@ commands:
   epmoney:
     description: Забрать деньги у игрока
     usage: /epmoney <ник> <количество>
-    permission: economicmooneclips.admin.money
+    permission: economicmooneclips.admin
 permissions:
-  economicmooneclips.admin.money:
+  economicmooneclips.admin:
     default: op
   economicmooneclips.admin:
     default: op
