@@ -1,0 +1,26 @@
+settings:
+  # Automatic kit delivery when the corresponding LuckPerms permission changes false -> true.
+  automatic-delivery: true
+  # Cooldown used for newly created kits.
+  default-cooldown-seconds: 86400
+  # GUI title colors use legacy Minecraft color codes.
+  player-menu-title: "&5&lMoonKits"
+  admin-menu-title: "&4&lMoonKits &8- &cРедактор"
+messages:
+  prefix: "&8[&5MoonKits&8] "
+  no-permission: "&cНедостаточно прав."
+  player-only: "&cЭта команда доступна только игроку."
+  kit-not-found: "&cКит не найден."
+  no-kit-permission: "&cУ тебя нет доступа к этому киту."
+  cooldown: "&cКит будет доступен через &f%time%&c."
+  inventory-full: "&cНедостаточно места в инвентаре. Кит не выдан."
+  kit-received: "&aТы получил кит &f%kit%&a."
+  auto-received: "&aЗа получение привилегии тебе автоматически выдан кит &f%kit%&a."
+  kit-created: "&aКит &f%kit% &aсоздан."
+  kit-deleted: "&eКит &f%kit% &eудалён."
+  kit-saved: "&aКит сохранён."
+  reload: "&aКонфигурация MoonKits перезагружена."
+  editor-prompt: "&eОтправь новое значение в чат. Для отмены напиши cancel."
+  invalid-value: "&cНекорректное значение."
+  admin-give: "&aКит &f%kit% &aвыдан игроку &f%player%&a."
+  preview: "&7Предпросмотр кита &f%kit%&7."
