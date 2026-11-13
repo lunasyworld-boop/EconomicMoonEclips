@@ -19,7 +19,7 @@ public final class EconomicMoonEclips extends JavaPlugin {
     private Economy economy;
     private SellManager sellManager;
     private AuctionManager auctionManager;
-    private java.util.List<java.util.Map.Entry<String, Double>> topCache = java.util.List.of();
+    private java.util.List<java.util.AbstractMap.SimpleEntry<String, Double>> topCache = java.util.List.of();
     private long topCacheAt;
 
     @Override
