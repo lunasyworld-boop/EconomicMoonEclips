@@ -1,0 +1,24 @@
+# EconomicMoonEclips 1.7.0
+language: ru
+theme:
+  primary: "DARK_PURPLE"
+  secondary: "DARK_BLUE"
+  accent: "AQUA"
+sell:
+  all-requires-confirmation: true
+  confirmation-timeout-seconds: 15
+  rank-multiplier:
+    stone: 1.0
+    silver: 1.25
+    gold: 2.0
+    diamond: 2.5
+    crystal: 3.0
+    eclipse: 4.0
+golden-mobs:
+  chance: 0.10
+  sell-multiplier: 3.0
+  excluded:
+    - PHANTOM
+    - ENDERMAN
+    - ENDERMITE
+    - SILVERFISH
