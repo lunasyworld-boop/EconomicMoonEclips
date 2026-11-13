@@ -5,21 +5,19 @@ import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
 
 public final class SellManager {
     private final EconomicMoonEclips plugin;
     private final Economy economy;
-    private final NamespacedKey goldDropKey;
+    private final TraderManager traderManager;
     private final Map<UUID, Long> pendingConfirmations = new HashMap<>();
     private final Map<String, Map<Material, Double>> prices = new LinkedHashMap<>();
     private final Map<String, String> titles = new LinkedHashMap<>();
@@ -27,7 +25,7 @@ public final class SellManager {
     public SellManager(EconomicMoonEclips plugin, Economy economy) {
         this.plugin = plugin;
         this.economy = economy;
-        this.goldDropKey = new NamespacedKey(plugin, "gold_mob_drop");
+        this.traderManager = new TraderManager(plugin, economy);
         loadPrices();
         Bukkit.getPluginManager().registerEvents(new SellListener(), plugin);
     }
@@ -105,7 +103,7 @@ public final class SellManager {
                 if (stack == null || stack.getType().isAir()) continue;
                 Double unit = findPrice(stack.getType());
                 if (unit == null) continue;
-                double multiplier = isGoldDrop(stack) ? goldMultiplier() : rankMultiplier(player);
+                double multiplier = rankMultiplier(player);
                 total += unit * stack.getAmount() * multiplier;
                 count += stack.getAmount();
                 contents[i] = null;
@@ -139,23 +137,6 @@ public final class SellManager {
             }
         }
         return 1.0;
-    }
-
-    public void markGoldDrop(ItemStack item) {
-        if (item == null || item.getType().isAir()) return;
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) return;
-        meta.getPersistentDataContainer().set(goldDropKey, PersistentDataType.BYTE, (byte) 1);
-        item.setItemMeta(meta);
-    }
-
-    private double goldMultiplier() {
-        return plugin.getConfig().getDouble("settings.gold-mob-drop-multiplier", 3.0);
-    }
-
-    private boolean isGoldDrop(ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        return meta != null && meta.getPersistentDataContainer().has(goldDropKey, PersistentDataType.BYTE);
     }
 
     private ItemStack button(Material material, String name, List<String> lore) {
@@ -193,6 +174,7 @@ public final class SellManager {
             }
             if (holder.id.startsWith("category:")) {
                 String category = holder.id.substring("category:".length());
+                if (category.equals("miscellaneous")) { traderManager.open(player); return; }
                 if (slot == 49) { openMain(player); return; }
                 ItemStack clicked = event.getCurrentItem();
                 if (clicked == null || clicked.getType().isAir()) return;
@@ -206,7 +188,7 @@ public final class SellManager {
                     ItemStack stack = contents[i];
                     if (stack != null && stack.getType() == type) {
                         amount += stack.getAmount();
-                        total += unit * stack.getAmount() * (isGoldDrop(stack) ? 3.0 : rankMultiplier(player));
+                        total += unit * stack.getAmount() * rankMultiplier(player);
                         contents[i] = null;
                     }
                 }
