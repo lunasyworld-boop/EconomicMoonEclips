@@ -72,21 +72,17 @@ public final class EconomicMoonEclips extends JavaPlugin {
 
     private void sendTop(CommandSender sender) {
         sender.sendMessage(color("&8&m──────── &5Moon&bEclips &8• &fТоп балансов &8&m────────"));
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            var top = java.util.Arrays.stream(Bukkit.getOfflinePlayers())
-                    .filter(p -> p.getName() != null)
-                    .map(p -> new java.util.AbstractMap.SimpleEntry<>(p.getName(), economy.getBalance(p)))
-                    .sorted(java.util.Map.Entry.<String, Double>comparingByValue(Comparator.reverseOrder()))
-                    .limit(10).toList();
-            Bukkit.getScheduler().runTask(this, () -> {
-                if (top.isEmpty()) sender.sendMessage(color("&7Пока нет данных."));
-                for (int i = 0; i < top.size(); i++) {
-                    var entry = top.get(i);
-                    sender.sendMessage(color("&b" + (i + 1) + ". &f" + entry.getKey()
-                            + " &8— &a" + String.format(Locale.US, "%.2f", entry.getValue()) + "$"));
-                }
-            });
-        });
+        var top = java.util.Arrays.stream(Bukkit.getOfflinePlayers())
+                .filter(p -> p.getName() != null)
+                .map(p -> new java.util.AbstractMap.SimpleEntry<>(p.getName(), economy.getBalance(p)))
+                .sorted(java.util.Map.Entry.<String, Double>comparingByValue(Comparator.reverseOrder()))
+                .limit(10).toList();
+        if (top.isEmpty()) sender.sendMessage(color("&7Пока нет данных."));
+        for (int i = 0; i < top.size(); i++) {
+            var entry = top.get(i);
+            sender.sendMessage(color("&b" + (i + 1) + ". &f" + entry.getKey()
+                    + " &8— &a" + String.format(Locale.US, "%.2f", entry.getValue()) + "$"));
+        }
     }
 
     private boolean handleMoneyCommand(CommandSender sender, boolean give, String[] args) {
