@@ -157,7 +157,7 @@ public final class AuctionManager implements Listener {
             inv.setItem(i, button(CATEGORY_ICONS[i], "&b" + categoryName(cat),
                     List.of(cat.equals(category) ? "&aВыбрано" : "&7Нажми для фильтра")));
         }
-        inv.setItem(8, button(Material.HOPPER, "&eСортировка: " + sortName(sort),
+        inv.setItem(50, button(Material.HOPPER, "&eСортировка: " + sortName(sort),
                 List.of("&7Нажми, чтобы изменить порядок", "&8Команды: /ah sort asc|desc")));
         int slot = 9;
         for (Listing listing : listings) {
@@ -304,129 +304,33 @@ public final class AuctionManager implements Listener {
 
     private void expireOne(int id) {
         Listing listing = getListing(id);
-        if (listing == null || !setStatus(id, "ACTIVE", "EXPIRED")) return;
-        mail(UUID.fromString(listing.sellerUuid), listing.item);
-        Player online = Bukkit.getPlayer(UUID.fromString(listing.sellerUuid));
+        if (listing == null) return;
+        UUID sellerId = UUID.fromString(listing.sellerUuid);
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement mail = connection.prepareStatement("INSERT INTO item_mail(player_uuid,item) VALUES(?,?)")) {
+                mail.setString(1, sellerId.toString());
+                mail.setBytes(2, listing.item.serializeAsBytes());
+                mail.executeUpdate();
+            }
+            try (PreparedStatement update = connection.prepareStatement(
+                    "UPDATE listings SET status='EXPIRED' WHERE id=? AND status='ACTIVE'")) {
+                update.setInt(1, id);
+                if (update.executeUpdate() != 1) {
+                    connection.rollback();
+                    return;
+                }
+            }
+            connection.commit();
+        } catch (SQLException ex) {
+            try { connection.rollback(); } catch (SQLException ignored) {}
+            plugin.getLogger().severe("Could not safely expire auction listing " + id + ": " + ex.getMessage());
+            return;
+        } finally {
+            try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
+        }
+        Player online = Bukkit.getPlayer(sellerId);
         if (online != null) deliverMail(online);
     }
 
-    private void mail(UUID player, ItemStack item) {
-        try (PreparedStatement ps = connection.prepareStatement("INSERT INTO item_mail(player_uuid,item) VALUES(?,?)")) {
-            ps.setString(1, player.toString()); ps.setBytes(2, item.serializeAsBytes()); ps.executeUpdate();
-        } catch (SQLException ex) { plugin.getLogger().severe("Could not save returned auction item: " + ex.getMessage()); }
-    }
-
-    @EventHandler
-    public void onJoin(PlayerJoinEvent event) { if (connection != null) deliverMail(event.getPlayer()); }
-
-    public void close() {\n        if (connection != null) { try { connection.close(); } catch (SQLException ex) { plugin.getLogger().warning("Auction database close failed: " + ex.getMessage()); } }\n    }\n\n    private void deliverMail(Player player) {
-        List<Integer> ids = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement("SELECT id,item FROM item_mail WHERE player_uuid=?")) {
-            ps.setString(1, player.getUniqueId().toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    int id = rs.getInt("id");
-                    ItemStack item = ItemStack.deserializeBytes(rs.getBytes("item"));
-                    deliver(player, item);
-                    ids.add(id);
-                }
-            }
-        } catch (SQLException ex) { plugin.getLogger().warning("Auction mail read failed: " + ex.getMessage()); }
-        for (int id : ids) {
-            try (PreparedStatement ps = connection.prepareStatement("DELETE FROM item_mail WHERE id=?")) {
-                ps.setInt(1, id); ps.executeUpdate();
-            } catch (SQLException ex) { plugin.getLogger().warning("Auction mail cleanup failed: " + ex.getMessage()); }
-        }
-    }
-
-    private String classify(Material m) {
-        String n = m.name();
-        if (n.endsWith("_SWORD") || n.endsWith("_AXE") || n.endsWith("_PICKAXE") || n.endsWith("_SHOVEL") || n.endsWith("_HOE") || n.equals("BOW") || n.equals("CROSSBOW") || n.equals("TRIDENT")) return "weapons_tools";
-        if (n.endsWith("_HELMET") || n.endsWith("_CHESTPLATE") || n.endsWith("_LEGGINGS") || n.endsWith("_BOOTS") || n.equals("ELYTRA") || n.equals("SHIELD")) return "armor";
-        if (n.contains("ORE") || n.endsWith("_INGOT") || n.equals("DIAMOND") || n.equals("EMERALD") || n.equals("RAW_IRON") || n.equals("RAW_GOLD") || n.equals("RAW_COPPER")) return "ores_resources";
-        if (n.contains("POTION")) return "potions";
-        if (n.contains("BREAD") || n.contains("BEEF") || n.contains("PORKCHOP") || n.contains("CHICKEN") || n.contains("CARROT") || n.contains("POTATO") || n.contains("APPLE") || n.contains("MELON") || n.contains("BERRY") || n.contains("COOKIE") || n.contains("FISH")) return "food";
-        if (n.contains("NETHER_STAR") || n.contains("DRAGON_EGG") || n.contains("NETHERITE") || n.contains("TOTEM") || n.contains("ELYTRA") || n.contains("SHULKER")) return "rare_items";
-        if (m.isBlock()) return "building_blocks";
-        return "miscellaneous";
-    }
-
-    private String categoryName(String category) {
-        return switch (category) {
-            case "weapons_tools" -> "Оружие/инструменты";
-            case "armor" -> "Броня";
-            case "ores_resources" -> "Руды/ресурсы";
-            case "building_blocks" -> "Блоки";
-            case "food" -> "Еда";
-            case "potions" -> "Зелья";
-            case "rare_items" -> "Редкости";
-            case "miscellaneous" -> "Разное";
-            default -> "Все лоты";
-        };
-    }
-
-    private String sortName(String sort) {
-        return switch (sort) { case "asc" -> "цена ↑"; case "desc" -> "цена ↓"; default -> "новые"; };
-    }
-    private long hoursLeft(long expires) { return Math.max(0, (expires - System.currentTimeMillis()) / 3_600_000L); }
-    private String money(double value) { return String.format(Locale.US, "%.2f", value); }
-    private String msg(String text) { return color(plugin.getConfig().getString("theme.prefix", "&8[&5Moon&bEclips&8] ") + text); }
-    private static String color(String text) { return ChatColor.translateAlternateColorCodes('&', text); }
-
-    private ItemStack button(Material type, String title, List<String> lore) {
-        ItemStack item = new ItemStack(type);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(color(title));
-        meta.setLore(lore.stream().map(AuctionManager::color).toList());
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    @EventHandler
-    public void onClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!(event.getInventory().getHolder() instanceof AuctionHolder holder)) return;
-        event.setCancelled(true);
-        if (event.getClickedInventory() != event.getView().getTopInventory()) return;
-        int slot = event.getRawSlot();
-        if (slot >= 0 && slot <= 7) {
-            String category = CATEGORIES[slot];
-            open(player, category, holder.search, holder.sort, 0);
-            return;
-        }
-        if (slot == 8) {
-            String sort = holder.sort.equals("asc") ? "desc" : "asc";
-            open(player, holder.category, holder.search, sort, 0);
-            return;
-        }
-        if (slot == 45) { open(player, holder.category, holder.search, holder.sort, Math.max(0, holder.page - 1)); return; }
-        if (slot == 53) { open(player, holder.category, holder.search, holder.sort, holder.page + 1); return; }
-        Listing listing = holder.listingAt(slot);
-        if (listing != null) {
-            if (listing.sellerUuid.equals(player.getUniqueId().toString())) withdraw(player, listing.id);
-            else purchase(player, listing.id);
-            open(player, holder.category, holder.search, holder.sort, holder.page);
-        }
-    }
-
-    @EventHandler
-    public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof AuctionHolder) event.setCancelled(true);
-    }
-
-    private static final class AuctionHolder implements InventoryHolder {
-        private final String category, search, sort;
-        private final int page;
-        private final List<Listing> listings;
-        private AuctionHolder(String category, String search, String sort, int page, List<Listing> listings) {
-            this.category = category; this.search = search; this.sort = sort; this.page = page; this.listings = listings;
-        }
-        private Listing listingAt(int slot) {
-            int index = slot - 9;
-            return index >= 0 && index < listings.size() ? listings.get(index) : null;
-        }
-        @Override public Inventory getInventory() { return null; }
-    }
-
-    private record Listing(int id, String sellerUuid, String sellerName, ItemStack item, double price, long expiresAt) {}
 }
