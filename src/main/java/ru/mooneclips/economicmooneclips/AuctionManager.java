@@ -12,7 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerJoinEvent;\nimport org.bukkit.configuration.file.FileConfiguration;\nimport org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -50,7 +50,7 @@ public final class AuctionManager implements Listener {
 
     private void openDatabase() {
         try {
-            File file = new File(plugin.getDataFolder(), plugin.getConfig().getString("auction.database-file", "auction.db"));
+            File file = new File(plugin.getDataFolder(), auctionConfig.getString("auction.database-file", "auction.db"));
             if (!plugin.getDataFolder().exists() && !plugin.getDataFolder().mkdirs()) {
                 throw new SQLException("Cannot create plugin data folder");
             }
@@ -120,7 +120,7 @@ public final class AuctionManager implements Listener {
         }
         ItemStack escrow = hand.clone();
         long now = System.currentTimeMillis();
-        long expires = now + plugin.getConfig().getLong("auction.duration-hours", 128) * 3_600_000L;
+        long expires = now + auctionConfig.getLong("auction.duration-hours", 128) * 3_600_000L;
         try (PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO listings(seller_uuid,seller_name,item,material,price,category,created_at,expires_at,status) VALUES(?,?,?,?,?,?,?,?,?)")) {
             ps.setString(1, player.getUniqueId().toString());
@@ -266,7 +266,7 @@ public final class AuctionManager implements Listener {
                 return;
             }
             debited = true;
-            double fee = listing.price * plugin.getConfig().getDouble("auction.commission-percent", 1.2) / 100.0;
+            double fee = listing.price * auctionConfig.getDouble("auction.commission-percent", 1.2) / 100.0;
             OfflinePlayer seller = Bukkit.getOfflinePlayer(UUID.fromString(listing.sellerUuid));
             EconomyResponse credit = economy.depositPlayer(seller, listing.price - fee);
             if (!credit.transactionSuccess()) {
