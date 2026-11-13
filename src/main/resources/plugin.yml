@@ -1,11 +1,11 @@
 name: EconomicMoonEclips
-version: 1.7.0
+version: 1.8.0
 main: ru.mooneclips.economicmooneclips.EconomicMoonEclips
 api-version: '1.21'
 depend: [Vault, Essentials]
 softdepend: [LuckPerms]
 authors: [MoonEclips]
-description: MoonEclips economy, selling and fixed-price auction.
+description: MoonEclips economy, trader, selling and fixed-price auction.
 commands:
   sell:
     description: Открыть меню продажи
