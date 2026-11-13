@@ -267,8 +267,10 @@ public final class KitGui implements Listener {
     }
 
     private ItemStack iconFor(Kit kit) {
-        List<ItemStack> items = kit.getItems();
-        return items.isEmpty() ? new ItemStack(Material.CHEST) : items.get(0).clone();
+        for (ItemStack item : kit.getItems()) {
+            if (item != null && !item.getType().isAir()) return item.clone();
+        }
+        return new ItemStack(Material.CHEST);
     }
 
     private ItemStack button(Material material, String name, String... lore) {
