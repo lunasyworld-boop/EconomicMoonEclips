@@ -191,17 +191,18 @@ public final class SellManager {
                 Double unit = prices.getOrDefault(category, Map.of()).get(type);
                 if (unit == null) return;
                 int amount = 0;
+                double total = 0.0;
                 ItemStack[] contents = player.getInventory().getStorageContents();
                 for (int i = 0; i < contents.length; i++) {
                     ItemStack stack = contents[i];
                     if (stack != null && stack.getType() == type) {
                         amount += stack.getAmount();
+                        total += unit * stack.getAmount() * (isGoldDrop(stack) ? 3.0 : rankMultiplier(player));
                         contents[i] = null;
                     }
                 }
                 if (amount == 0) { player.sendMessage(msg("&cУ тебя нет этого предмета.")); return; }
                 player.getInventory().setStorageContents(contents);
-                double total = unit * amount * rankMultiplier(player);
                 economy.depositPlayer(player, total);
                 player.sendMessage(msg("&aПродано: &f" + pretty(type) + " x" + amount + " &7за &b" + money(total) + "$"));
                 openCategory(player, category);
