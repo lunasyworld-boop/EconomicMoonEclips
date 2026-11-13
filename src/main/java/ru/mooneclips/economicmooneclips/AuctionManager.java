@@ -63,6 +63,9 @@ public final class AuctionManager implements Listener {
             try (Statement st = connection.createStatement()) {
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS listings (id INTEGER PRIMARY KEY AUTOINCREMENT, seller_uuid TEXT NOT NULL, seller_name TEXT NOT NULL, item BLOB NOT NULL, material TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, status TEXT NOT NULL)");
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS item_mail (id INTEGER PRIMARY KEY AUTOINCREMENT, player_uuid TEXT NOT NULL, item BLOB NOT NULL)");
+                st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_listings_status_expiry ON listings(status, expires_at)");
+                st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_listings_seller_status ON listings(seller_uuid, status, expires_at)");
+                st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_item_mail_player ON item_mail(player_uuid)");
             }
         } catch (Exception ex) {
             plugin.getLogger().severe("Auction database could not be opened: " + ex.getMessage());
