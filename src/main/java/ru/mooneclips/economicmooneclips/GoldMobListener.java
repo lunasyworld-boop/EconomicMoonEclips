@@ -1,6 +1,5 @@
 package ru.mooneclips.economicmooneclips;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Monster;
 import org.bukkit.event.EventHandler;
@@ -26,14 +25,14 @@ public final class GoldMobListener implements Listener {
 
     @EventHandler
     public void onDeath(EntityDeathEvent event) {
-        Entity entity = event.getEntity();
+        org.bukkit.entity.LivingEntity entity = event.getEntity();
         if (!(entity instanceof Monster) || EXCLUDED.contains(entity.getType())) return;
         double chance = plugin.getConfig().getDouble("settings.gold-mob-chance", 10.0);
         if (ThreadLocalRandom.current().nextDouble(100.0) >= chance) return;
         for (ItemStack drop : event.getDrops()) sellManager.markGoldDrop(drop);
-        Entity killer = entity.getKiller();
-        if (killer instanceof org.bukkit.entity.Player player) {
-            player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
+        org.bukkit.entity.Player killer = entity.getKiller();
+        if (killer != null) {
+            killer.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                     plugin.getConfig().getString("theme.prefix", "&8[&5Moon&bEclips&8] ") + "&6Золотой моб! Его разрешённый дроп продаётся по ×3."));
         }
     }
