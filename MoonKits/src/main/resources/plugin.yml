@@ -1,0 +1,47 @@
+name: MoonKits
+version: 1.0.0
+main: ru.mooneclips.moonkits.MoonKitsPlugin
+api-version: '1.21'
+author: MoonEclips
+description: Privilege kits with LuckPerms integration and an administrator GUI.
+depend: [LuckPerms]
+commands:
+  mkits:
+    description: Open the MoonKits menu.
+    usage: /mkits
+    aliases: [mkitlist]
+  mkit:
+    description: Claim or manage MoonKits.
+    usage: /mkit [kit|create|edit|delete|give|preview|info|reload]
+  mkitadmin:
+    description: Open the MoonKits administrator editor.
+    usage: /mkitadmin
+    aliases: [mka]
+permissions:
+  moonkits.admin:
+    description: Access the MoonKits administrator GUI and kit editor.
+    default: op
+  moonkits.reload:
+    description: Reload MoonKits configuration.
+    default: op
+  moonkits.give:
+    description: Give a kit to another player.
+    default: op
+  moonkits.kit.eclipse:
+    description: Access to the ECLIPSE kit.
+    default: false
+  moonkits.kit.crystal:
+    description: Access to the CRYSTAL kit.
+    default: false
+  moonkits.kit.diamond:
+    description: Access to the DIAMOND kit.
+    default: false
+  moonkits.kit.gold:
+    description: Access to the GOLD kit.
+    default: false
+  moonkits.kit.silver:
+    description: Access to the SILVER kit.
+    default: false
+  moonkits.kit.stone:
+    description: Access to the STONE kit.
+    default: false
