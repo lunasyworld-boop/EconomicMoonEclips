@@ -40,3 +40,4 @@ This is still a development build. A successful Maven build only confirms compil
 - Removed golden mob effects and bonus mob drops.
 - Added persistent random trader with independent buy/sell stock refreshes every two hours.
 - Fixed auction GUI handling and added SQLite indexes; cached top balances for 30 seconds.
+
