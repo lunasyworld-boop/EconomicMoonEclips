@@ -53,11 +53,6 @@ public final class MoonKitsPlugin extends JavaPlugin implements CommandExecutor,
         });
     }
 
-    @Override
-    public void onDisable() {
-        if (luckPerms != null) luckPerms.getEventBus().unsubscribeListener(this);
-    }
-
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
