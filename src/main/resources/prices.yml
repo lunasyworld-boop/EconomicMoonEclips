@@ -4,7 +4,7 @@ categories:
     title: "Руды и ресурсы"
     items:
       COAL: 1.0
-      NETHER_QUARTZ: 1.0
+      QUARTZ: 1.0
       REDSTONE: 1.5
       LAPIS_LAZULI: 2.0
       COPPER_INGOT: 2.0
