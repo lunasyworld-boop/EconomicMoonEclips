@@ -118,7 +118,7 @@ public final class AuctionManager implements Listener {
             ps.setLong(8, expires);
             ps.setString(9, "ACTIVE");
             ps.executeUpdate();
-            player.getInventory().setItemInMainHand(null);
+            player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
             player.sendMessage(msg("&aЛот выставлен на &b" + money(price) + "$ &7на 128 часов."));
         } catch (SQLException ex) {
             plugin.getLogger().severe("Could not create auction listing: " + ex.getMessage());
@@ -317,9 +317,9 @@ public final class AuctionManager implements Listener {
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinEvent event) { deliverMail(event.getPlayer()); }
+    public void onJoin(PlayerJoinEvent event) { if (connection != null) deliverMail(event.getPlayer()); }
 
-    private void deliverMail(Player player) {
+    public void close() {\n        if (connection != null) { try { connection.close(); } catch (SQLException ex) { plugin.getLogger().warning("Auction database close failed: " + ex.getMessage()); } }\n    }\n\n    private void deliverMail(Player player) {
         List<Integer> ids = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement("SELECT id,item FROM item_mail WHERE player_uuid=?")) {
             ps.setString(1, player.getUniqueId().toString());
@@ -389,7 +389,7 @@ public final class AuctionManager implements Listener {
         event.setCancelled(true);
         if (event.getClickedInventory() != event.getView().getTopInventory()) return;
         int slot = event.getRawSlot();
-        if (slot >= 0 && slot <= 8) {
+        if (slot >= 0 && slot <= 7) {
             String category = CATEGORIES[slot];
             open(player, category, holder.search, holder.sort, 0);
             return;
