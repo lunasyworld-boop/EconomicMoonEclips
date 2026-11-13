@@ -1,0 +1,12 @@
+duration-hours: 128
+commission-percent: 1.2
+default-slots: 6
+rank-slots:
+  stone: 6
+  silver: 7
+  gold: 8
+  diamond: 9
+  crystal: 10
+  eclipse: 11
+storage:
+  file: "auction-data.yml"
