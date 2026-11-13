@@ -16,7 +16,7 @@ import java.util.Locale;
 
 public final class EconomicMoonEclips extends JavaPlugin {
     private Economy economy;
-    private SellManager sellManager;
+    private SellManager sellManager;\n    private AuctionManager auctionManager;
 
     @Override
     public void onEnable() {
@@ -30,7 +30,7 @@ public final class EconomicMoonEclips extends JavaPlugin {
             return;
         }
         sellManager = new SellManager(this, economy);
-        getServer().getPluginManager().registerEvents(new GoldMobListener(this, sellManager), this);
+        getServer().getPluginManager().registerEvents(new GoldMobListener(this, sellManager), this);\n        auctionManager = new AuctionManager(this, economy);
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
             getLogger().warning("LuckPerms not found. Rank permissions must be provided by a permissions plugin.");
         }
