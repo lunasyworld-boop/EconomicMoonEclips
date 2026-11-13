@@ -1,6 +1,6 @@
 package ru.mooneclips.economicmooneclips;
 
-import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.Economy;\nimport net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -119,14 +119,19 @@ public final class EconomicMoonEclips extends JavaPlugin {
             return true;
         }
         double value = amount.doubleValue();
+        EconomyResponse response;
         if (give) {
-            economy.depositPlayer(target, value);
+            response = economy.depositPlayer(target, value);
         } else {
             if (economy.getBalance(target) < value) {
                 sender.sendMessage(color("&cУ игрока недостаточно средств."));
                 return true;
             }
-            economy.withdrawPlayer(target, value);
+            response = economy.withdrawPlayer(target, value);
+        }
+        if (!response.transactionSuccess()) {
+            sender.sendMessage(color("&cОперация с балансом не выполнена: " + response.errorMessage));
+            return true;
         }
         sender.sendMessage(color("&8[&5Moon&bEclips&8] " + (give ? "&aВыдано &f" : "&eСнято &f")
                 + amount.toPlainString() + "$ " + (give ? "&aигроку &f" : "&eу игрока &f")
