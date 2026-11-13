@@ -16,7 +16,8 @@ import java.util.Locale;
 
 public final class EconomicMoonEclips extends JavaPlugin {
     private Economy economy;
-    private SellManager sellManager;\n    private AuctionManager auctionManager;
+    private SellManager sellManager;
+    private AuctionManager auctionManager;
 
     @Override
     public void onEnable() {
@@ -30,11 +31,17 @@ public final class EconomicMoonEclips extends JavaPlugin {
             return;
         }
         sellManager = new SellManager(this, economy);
-        getServer().getPluginManager().registerEvents(new GoldMobListener(this, sellManager), this);\n        auctionManager = new AuctionManager(this, economy);
+        getServer().getPluginManager().registerEvents(new GoldMobListener(this, sellManager), this);
+        auctionManager = new AuctionManager(this, economy);
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
             getLogger().warning("LuckPerms not found. Rank permissions must be provided by a permissions plugin.");
         }
         getLogger().info("EconomicMoonEclips 1.7.0 enabled. Economy: " + economy.getName());
+    }
+
+    @Override
+    public void onDisable() {
+        if (auctionManager != null) auctionManager.close();
     }
 
     private boolean setupEconomy() {
@@ -60,7 +67,11 @@ public final class EconomicMoonEclips extends JavaPlugin {
             return true;
         }
         if (name.equals("ah")) {
-            sender.sendMessage(color("&8[&5Moon&bEclips&8] &eАукцион ещё не подключён. Он будет добавлен до релизной сборки."));
+            if (!(sender instanceof org.bukkit.entity.Player player)) {
+                sender.sendMessage(color("&cКоманда доступна только игроку."));
+                return true;
+            }
+            auctionManager.handleCommand(player, args);
             return true;
         }
         if (name.equals("top")) {
