@@ -1,0 +1,43 @@
+name: EconomicMoonEclips
+version: 1.7.0
+main: ru.mooneclips.economicmooneclips.EconomicMoonEclips
+api-version: '1.21'
+depend: [Vault, Essentials]
+softdepend: [LuckPerms]
+authors: [MoonEclips]
+description: MoonEclips economy, selling and fixed-price auction.
+commands:
+  sell:
+    description: Открыть меню продажи
+    usage: /sell [all]
+  ah:
+    description: Аукцион MoonEclips
+    usage: /ah
+  top:
+    description: Топ игроков по балансу
+    usage: /top
+  pmoney:
+    description: Выдать деньги игроку
+    usage: /pmoney <ник> <количество>
+    permission: economicmooneclips.admin.money
+  epmoney:
+    description: Забрать деньги у игрока
+    usage: /epmoney <ник> <количество>
+    permission: economicmooneclips.admin.money
+permissions:
+  economicmooneclips.admin.money:
+    default: op
+  economicmooneclips.admin:
+    default: op
+  economicmooneclips.rank.stone:
+    default: true
+  economicmooneclips.rank.silver:
+    default: false
+  economicmooneclips.rank.gold:
+    default: false
+  economicmooneclips.rank.diamond:
+    default: false
+  economicmooneclips.rank.crystal:
+    default: false
+  economicmooneclips.rank.eclipse:
+    default: false
