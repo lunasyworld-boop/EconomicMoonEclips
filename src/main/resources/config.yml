@@ -1,24 +1,31 @@
-# EconomicMoonEclips 1.7.0
+# EconomicMoonEclips 1.7.0 — Paper 1.21.4
 language: ru
 theme:
-  primary: "DARK_PURPLE"
-  secondary: "DARK_BLUE"
-  accent: "AQUA"
-sell:
-  all-requires-confirmation: true
-  confirmation-timeout-seconds: 15
-  rank-multiplier:
-    stone: 1.0
-    silver: 1.25
-    gold: 2.0
-    diamond: 2.5
-    crystal: 3.0
-    eclipse: 4.0
-golden-mobs:
-  chance: 0.10
-  sell-multiplier: 3.0
-  excluded:
-    - PHANTOM
-    - ENDERMAN
-    - ENDERMITE
-    - SILVERFISH
+  prefix: "&8[&5Moon&bEclips&8] "
+  primary: "&5"
+  secondary: "&1"
+  accent: "&b"
+settings:
+  sell-all-confirmation-seconds: 15
+  gold-mob-chance: 10.0
+  gold-mob-drop-multiplier: 3.0
+  gold-mob-ignores-rank: true
+ranks:
+  stone:
+    multiplier: 1.0
+    auction-slots: 6
+  silver:
+    multiplier: 1.25
+    auction-slots: 7
+  gold:
+    multiplier: 2.0
+    auction-slots: 8
+  diamond:
+    multiplier: 2.5
+    auction-slots: 9
+  crystal:
+    multiplier: 3.0
+    auction-slots: 10
+  eclipse:
+    multiplier: 4.0
+    auction-slots: 11
