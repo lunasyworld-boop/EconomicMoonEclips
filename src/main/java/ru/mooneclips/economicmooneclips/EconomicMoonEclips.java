@@ -32,18 +32,19 @@ public final class EconomicMoonEclips extends JavaPlugin {
             return;
         }
         sellManager = new SellManager(this, economy);
-        getServer().getPluginManager().registerEvents(new GoldMobListener(this, sellManager), this);
         auctionManager = new AuctionManager(this, economy);
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
             getLogger().warning("LuckPerms not found. Rank permissions must be provided by a permissions plugin.");
         }
-        getLogger().info("EconomicMoonEclips 1.7.0 enabled. Economy: " + economy.getName());
+        getLogger().info("EconomicMoonEclips 1.8.0 enabled. Economy: " + economy.getName());
     }
 
     @Override
     public void onDisable() {
         if (auctionManager != null) auctionManager.close();
     }
+
+    public SellManager getSellManager() { return sellManager; }
 
     private boolean setupEconomy() {
         if (Bukkit.getPluginManager().getPlugin("Vault") == null) return false;
