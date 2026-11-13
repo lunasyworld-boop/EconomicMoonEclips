@@ -1,6 +1,6 @@
 package ru.mooneclips.economicmooneclips;
 
-import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.Economy;\nimport net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
