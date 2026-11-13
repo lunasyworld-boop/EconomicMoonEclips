@@ -1,0 +1,46 @@
+# Цена за одну единицу. Необработанные руды и блоки ресурсов не продаются.
+categories:
+  resources:
+    title: "Руды и ресурсы"
+    items:
+      COAL: 1.0
+      NETHER_QUARTZ: 1.0
+      REDSTONE: 1.5
+      LAPIS_LAZULI: 2.0
+      COPPER_INGOT: 2.0
+      IRON_INGOT: 3.5
+      GOLD_INGOT: 4.0
+      DIAMOND: 6.0
+      EMERALD: 10.0
+      NETHERITE_INGOT: 250.0
+  undead:
+    title: "Нежить"
+    items:
+      ROTTEN_FLESH: 1.0
+      BONE: 2.0
+      ARROW: 2.0
+      STRING: 2.0
+      GUNPOWDER: 4.0
+      SPIDER_EYE: 4.0
+      SLIME_BALL: 6.0
+      ENDER_PEARL: 10.0
+      BLAZE_ROD: 10.0
+      GHAST_TEAR: 16.0
+  farm:
+    title: "Ферма"
+    items:
+      SUGAR_CANE: 0.8
+      WHEAT: 1.0
+      CARROT: 0.8
+      POTATO: 0.8
+      BEETROOT: 1.0
+      MELON_SLICE: 0.5
+      PUMPKIN: 2.0
+      COCOA_BEANS: 1.0
+      NETHER_WART: 2.0
+      BAMBOO: 0.5
+      SWEET_BERRIES: 0.8
+      GLOW_BERRIES: 1.0
+  miscellaneous:
+    title: "Разное"
+    items: {}
