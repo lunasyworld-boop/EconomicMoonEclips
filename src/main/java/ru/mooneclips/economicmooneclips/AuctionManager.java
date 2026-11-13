@@ -52,7 +52,7 @@ public final class AuctionManager implements Listener {
         try {
             File file = new File(plugin.getDataFolder(), plugin.getConfig().getString("auction.database-file", "auction.db"));
             if (!plugin.getDataFolder().exists() && !plugin.getDataFolder().mkdirs()) throw new SQLException("Cannot create plugin data folder");
-            connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+            Class.forName("org.sqlite.JDBC");\n            connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
             try (Statement st = connection.createStatement()) {
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS listings (id INTEGER PRIMARY KEY AUTOINCREMENT, seller_uuid TEXT NOT NULL, seller_name TEXT NOT NULL, item BLOB NOT NULL, material TEXT NOT NULL, price REAL NOT NULL, category TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, status TEXT NOT NULL)");
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS item_mail (id INTEGER PRIMARY KEY AUTOINCREMENT, player_uuid TEXT NOT NULL, item BLOB NOT NULL)");
