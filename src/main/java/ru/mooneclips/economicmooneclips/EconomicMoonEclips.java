@@ -19,6 +19,8 @@ public final class EconomicMoonEclips extends JavaPlugin {
     private Economy economy;
     private SellManager sellManager;
     private AuctionManager auctionManager;
+    private java.util.List<java.util.Map.Entry<String, Double>> topCache = java.util.List.of();
+    private long topCacheAt;
 
     @Override
     public void onEnable() {
@@ -85,11 +87,15 @@ public final class EconomicMoonEclips extends JavaPlugin {
 
     private void sendTop(CommandSender sender) {
         sender.sendMessage(color("&8&m──────── &5Moon&bEclips &8• &fТоп балансов &8&m────────"));
-        var top = java.util.Arrays.stream(Bukkit.getOfflinePlayers())
-                .filter(p -> p.getName() != null)
-                .map(p -> new java.util.AbstractMap.SimpleEntry<>(p.getName(), economy.getBalance(p)))
-                .sorted(java.util.Map.Entry.<String, Double>comparingByValue(Comparator.reverseOrder()))
-                .limit(10).toList();
+        if (System.currentTimeMillis() - topCacheAt >= 30_000L) {
+            topCache = java.util.Arrays.stream(Bukkit.getOfflinePlayers())
+                    .filter(p -> p.getName() != null)
+                    .map(p -> new java.util.AbstractMap.SimpleEntry<>(p.getName(), economy.getBalance(p)))
+                    .sorted(java.util.Map.Entry.<String, Double>comparingByValue(Comparator.reverseOrder()))
+                    .limit(10).toList();
+            topCacheAt = System.currentTimeMillis();
+        }
+        var top = topCache;
         if (top.isEmpty()) sender.sendMessage(color("&7Пока нет данных."));
         for (int i = 0; i < top.size(); i++) {
             var entry = top.get(i);
