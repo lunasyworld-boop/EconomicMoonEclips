@@ -1,6 +1,7 @@
 package ru.mooneclips.economicmooneclips;
 
-import net.milkbowl.vault.economy.Economy;\nimport net.milkbowl.vault.economy.EconomyResponse;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -110,8 +111,12 @@ public final class SellManager {
                 contents[i] = null;
             }
             if (count == 0) { player.sendMessage(msg("&cНет разрешённых предметов для продажи.")); return; }
+            EconomyResponse payout = economy.depositPlayer(player, total);
+            if (!payout.transactionSuccess()) {
+                player.sendMessage(msg("&cНе удалось зачислить деньги. Предметы сохранены."));
+                return;
+            }
             player.getInventory().setStorageContents(contents);
-            economy.depositPlayer(player, total);
             player.sendMessage(msg("&aПродано предметов: &f" + count + " &7на сумму &b" + money(total) + "$"));
             return;
         }
@@ -202,8 +207,12 @@ public final class SellManager {
                     }
                 }
                 if (amount == 0) { player.sendMessage(msg("&cУ тебя нет этого предмета.")); return; }
+                EconomyResponse payout = economy.depositPlayer(player, total);
+                if (!payout.transactionSuccess()) {
+                    player.sendMessage(msg("&cНе удалось зачислить деньги. Предметы сохранены."));
+                    return;
+                }
                 player.getInventory().setStorageContents(contents);
-                economy.depositPlayer(player, total);
                 player.sendMessage(msg("&aПродано: &f" + pretty(type) + " x" + amount + " &7за &b" + money(total) + "$"));
                 openCategory(player, category);
             }
