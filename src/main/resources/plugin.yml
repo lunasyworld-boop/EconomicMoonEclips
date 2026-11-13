@@ -19,7 +19,7 @@ commands:
   pmoney:
     description: Выдать деньги игроку
     usage: /pmoney <ник> <количество>
-    permission: economicmooneclips.admin.money
+    permission: economicmooneclips.admin
   epmoney:
     description: Забрать деньги у игрока
     usage: /epmoney <ник> <количество>
