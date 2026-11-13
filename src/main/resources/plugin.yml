@@ -9,10 +9,10 @@ description: MoonEclips economy, selling and fixed-price auction.
 commands:
   sell:
     description: Открыть меню продажи
-    usage: /sell [all]
+    usage: /sell [all [confirm]]
   ah:
     description: Аукцион MoonEclips
-    usage: /ah
+    usage: /ah [sell <цена>|search <текст>|sort <asc|desc>]
   top:
     description: Топ игроков по балансу
     usage: /top
@@ -25,8 +25,6 @@ commands:
     usage: /epmoney <ник> <количество>
     permission: economicmooneclips.admin
 permissions:
-  economicmooneclips.admin:
-    default: op
   economicmooneclips.admin:
     default: op
   economicmooneclips.rank.stone:
