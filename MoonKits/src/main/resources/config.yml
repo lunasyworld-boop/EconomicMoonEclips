@@ -24,3 +24,14 @@ messages:
   invalid-value: "&cНекорректное значение."
   admin-give: "&aКит &f%kit% &aвыдан игроку &f%player%&a."
   preview: "&7Предпросмотр кита &f%kit%&7."
+
+# LuckPerms group names can be changed here. Kit IDs on the left match MoonKits kit IDs.
+privileges:
+  default-group: player
+  groups:
+    eclipse: eclipse
+    crystal: crystal
+    diamond: diamond
+    gold: gold
+    silver: silver
+    stone: stone
