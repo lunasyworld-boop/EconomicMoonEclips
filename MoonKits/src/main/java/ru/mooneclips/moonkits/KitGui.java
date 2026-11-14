@@ -66,9 +66,103 @@ public final class KitGui implements Listener {
             holder.getSlots().put(slot, kit.getId());
             slot++;
         }
+        inv.setItem(45, button(Material.EMERALD_BLOCK, "&aВыдать привилегию", "&7Выбрать игрока, привилегию и срок"));
+        inv.setItem(46, button(Material.WRITABLE_BOOK, "&eАктивные привилегии", "&7Посмотреть выданные привилегии и сроки"));
         inv.setItem(49, button(Material.EMERALD, "&aСоздать кит", "&7Команда: /mkit create <название>"));
         inv.setItem(53, button(Material.BARRIER, "&cЗакрыть"));
         player.openInventory(inv);
+    }
+
+
+    private void openPlayerSelect(Player admin) {
+        MenuHolder holder = new MenuHolder(MenuHolder.Type.SELECT_PLAYER, null);
+        Inventory inv = Bukkit.createInventory(holder, 54, color("&8MoonKits &7» &aВыбор игрока"));
+        holder.setInventory(inv);
+        int slot = 0;
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            if (slot >= 45) break;
+            inv.setItem(slot, button(Material.PLAYER_HEAD, "&e" + target.getName(), "&7Нажми, чтобы выбрать"));
+            holder.getPlayerSlots().put(slot++, target.getUniqueId());
+        }
+        inv.setItem(49, button(Material.ARROW, "&7Назад"));
+        admin.openInventory(inv);
+    }
+
+    private void openPrivilegeSelect(Player admin, UUID targetUuid) {
+        MenuHolder holder = new MenuHolder(MenuHolder.Type.SELECT_PRIVILEGE, null);
+        holder.setTargetUuid(targetUuid);
+        Inventory inv = Bukkit.createInventory(holder, 54, color("&8MoonKits &7» &dВыбор привилегии"));
+        holder.setInventory(inv);
+        int slot = 0;
+        for (Kit kit : manager.getKits()) {
+            if (slot >= 45) break;
+            inv.setItem(slot, button(iconFor(kit).getType(), "&e" + kit.getDisplayName(),
+                    "&7Группа LuckPerms: &f" + plugin.getPrivilegeGroup(kit.getId())));
+            holder.getSlots().put(slot++, kit.getId());
+        }
+        inv.setItem(49, button(Material.ARROW, "&7Назад"));
+        admin.openInventory(inv);
+    }
+
+    private void openDurationSelect(Player admin, UUID targetUuid, String kitId) {
+        MenuHolder holder = new MenuHolder(MenuHolder.Type.SELECT_DURATION, kitId);
+        holder.setTargetUuid(targetUuid);
+        Inventory inv = Bukkit.createInventory(holder, 54, color("&8MoonKits &7» &eСрок привилегии"));
+        holder.setInventory(inv);
+        inv.setItem(20, button(Material.CLOCK, "&a1 день"));
+        inv.setItem(22, button(Material.CLOCK, "&a7 дней"));
+        inv.setItem(24, button(Material.CLOCK, "&a30 дней"));
+        inv.setItem(26, button(Material.CLOCK, "&a90 дней"));
+        inv.setItem(49, button(Material.NAME_TAG, "&eСвой срок", "&7Например: 14d, 12h или 30m"));
+        inv.setItem(53, button(Material.ARROW, "&7Назад"));
+        admin.openInventory(inv);
+    }
+
+    private void openActiveGrants(Player admin) {
+        MenuHolder holder = new MenuHolder(MenuHolder.Type.ACTIVE_GRANTS, null);
+        Inventory inv = Bukkit.createInventory(holder, 54, color("&8MoonKits &7» &eАктивные привилегии"));
+        holder.setInventory(inv);
+        int slot = 0;
+        for (PrivilegeManager.Grant grant : plugin.getPrivilegeManager().getActiveGrants()) {
+            if (slot >= 45) break;
+            Kit kit = manager.getKit(grant.kitId());
+            String display = kit == null ? grant.kitId() : kit.getDisplayName();
+            inv.setItem(slot++, button(Material.NAME_TAG, "&e" + grant.playerName(),
+                    "&7Привилегия: &f" + display, "&7Группа: &f" + grant.group(),
+                    "&7Осталось: &a" + KitManager.formatDuration(grant.remainingMillis())));
+        }
+        if (slot == 0) inv.setItem(22, button(Material.PAPER, "&7Активных временных привилегий нет"));
+        inv.setItem(49, button(Material.ARROW, "&7Назад"));
+        admin.openInventory(inv);
+    }
+
+    private void grantPrivilege(Player admin, UUID targetUuid, String kitId, long durationMillis) {
+        String playerName = Bukkit.getOfflinePlayer(targetUuid).getName();
+        if (playerName == null) playerName = targetUuid.toString();
+        plugin.getPrivilegeManager().give(targetUuid, playerName, kitId, durationMillis);
+        admin.sendMessage(color("&aВыдача &f" + kitId + " &aигроку &f" + playerName
+                + " &aотправлена в LuckPerms. Срок: &f" + KitManager.formatDuration(durationMillis)));
+        openAdminMenu(admin);
+    }
+
+    private long parseDuration(String input) {
+        try {
+            if (input.length() < 2) return -1L;
+            char unit = Character.toLowerCase(input.charAt(input.length() - 1));
+            long amount = Long.parseLong(input.substring(0, input.length() - 1));
+            if (amount <= 0) return -1L;
+            long multiplier = switch (unit) {
+                case 'd' -> 86_400_000L;
+                case 'h' -> 3_600_000L;
+                case 'm' -> 60_000L;
+                default -> -1L;
+            };
+            if (multiplier < 0) return -1L;
+            long millis = Math.multiplyExact(amount, multiplier);
+            return millis <= 3650L * 86_400_000L ? millis : -1L;
+        } catch (NumberFormatException | ArithmeticException ex) {
+            return -1L;
+        }
     }
 
     public void openEditor(Player player, Kit kit) {
@@ -104,13 +198,12 @@ public final class KitGui implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getView().getTopInventory().getHolder() instanceof MenuHolder holder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (holder.getType() == MenuHolder.Type.PREVIEW) {
+        if (holder.getType() != MenuHolder.Type.EDITOR) {
             event.setCancelled(true);
-            return;
-        }
-        if (holder.getType() == MenuHolder.Type.PLAYER) {
             if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getView().getTopInventory().getSize()) return;
-            event.setCancelled(true);
+        }
+        if (holder.getType() == MenuHolder.Type.PREVIEW) return;
+        if (holder.getType() == MenuHolder.Type.PLAYER) {
             String id = holder.getSlots().get(event.getRawSlot());
             if (id == null) return;
             Kit kit = manager.getKit(id);
@@ -130,9 +223,9 @@ public final class KitGui implements Listener {
             return;
         }
         if (holder.getType() == MenuHolder.Type.ADMIN) {
-            if (event.getRawSlot() < 0 || event.getRawSlot() >= event.getView().getTopInventory().getSize()) return;
-            event.setCancelled(true);
             if (event.getRawSlot() == 53) { player.closeInventory(); return; }
+            if (event.getRawSlot() == 45) { openPlayerSelect(player); return; }
+            if (event.getRawSlot() == 46) { openActiveGrants(player); return; }
             if (event.getRawSlot() == 49) {
                 player.closeInventory();
                 player.sendMessage(plugin.msg("editor-prompt") + color("&7 Используй /mkit create <название>."));
@@ -143,8 +236,43 @@ public final class KitGui implements Listener {
             if (kit != null) openEditor(player, kit);
             return;
         }
-        if (holder.getType() != MenuHolder.Type.EDITOR) return;
         int raw = event.getRawSlot();
+
+        if (holder.getType() == MenuHolder.Type.SELECT_PLAYER) {
+            if (raw == 49) { openAdminMenu(player); return; }
+            UUID targetUuid = holder.getPlayerSlots().get(raw);
+            if (targetUuid != null) openPrivilegeSelect(player, targetUuid);
+            return;
+        }
+        if (holder.getType() == MenuHolder.Type.SELECT_PRIVILEGE) {
+            if (raw == 49) { openPlayerSelect(player); return; }
+            String kitId = holder.getSlots().get(raw);
+            if (kitId != null) openDurationSelect(player, holder.getTargetUuid(), kitId);
+            return;
+        }
+        if (holder.getType() == MenuHolder.Type.SELECT_DURATION) {
+            long days = switch (raw) {
+                case 20 -> 1L;
+                case 22 -> 7L;
+                case 24 -> 30L;
+                case 26 -> 90L;
+                default -> 0L;
+            };
+            if (raw == 53) { openPrivilegeSelect(player, holder.getTargetUuid()); return; }
+            if (raw == 49) {
+                pendingEdits.put(player.getUniqueId(), "PRIVDUR:" + holder.getTargetUuid() + ":" + holder.getKitId());
+                player.closeInventory();
+                player.sendMessage(color("&eВведи срок: например 14d, 12h или 30m. Для отмены напиши cancel."));
+                return;
+            }
+            if (days > 0) grantPrivilege(player, holder.getTargetUuid(), holder.getKitId(), days * 86_400_000L);
+            return;
+        }
+        if (holder.getType() == MenuHolder.Type.ACTIVE_GRANTS) {
+            if (raw == 49) openAdminMenu(player);
+            return;
+        }
+        if (holder.getType() != MenuHolder.Type.EDITOR) return;
         if (raw >= 0 && raw < 45) {
             event.setCancelled(true);
             ItemStack cursor = event.getCursor();
@@ -204,8 +332,11 @@ public final class KitGui implements Listener {
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof MenuHolder holder
-                && holder.getType() == MenuHolder.Type.EDITOR) {
+        if (event.getView().getTopInventory().getHolder() instanceof MenuHolder holder) {
+            if (holder.getType() != MenuHolder.Type.EDITOR) {
+                event.setCancelled(true);
+                return;
+            }
             for (int raw : event.getRawSlots()) {
                 if (raw < 45) { event.setCancelled(true); return; }
             }
@@ -234,6 +365,23 @@ public final class KitGui implements Listener {
         String pending = pendingEdits.remove(event.getPlayer().getUniqueId());
         if (pending == null) return;
         event.setCancelled(true);
+        if (pending.startsWith("PRIVDUR:")) {
+            String[] parts = pending.split(":", 3);
+            String input = event.getMessage().trim();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (input.equalsIgnoreCase("cancel")) {
+                    if (player.isOnline()) openAdminMenu(player);
+                    return;
+                }
+                long millis = parseDuration(input);
+                if (millis <= 0L) {
+                    player.sendMessage(color("&cНеверный срок. Пример: 14d, 12h или 30m."));
+                    return;
+                }
+                grantPrivilege(player, UUID.fromString(parts[1]), parts[2], millis);
+            });
+            return;
+        }
         String[] parts = pending.split(":", 2);
         String id = parts[0];
         String field = parts[1];
