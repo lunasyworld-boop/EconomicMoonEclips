@@ -20,6 +20,7 @@ public final class MoonKitsPlugin extends JavaPlugin implements CommandExecutor,
     private KitManager kitManager;
     private KitGui gui;
     private LuckPerms luckPerms;
+    private PrivilegeManager privilegeManager;
 
     @Override
     public void onEnable() {
@@ -36,6 +37,9 @@ public final class MoonKitsPlugin extends JavaPlugin implements CommandExecutor,
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+
+        privilegeManager = new PrivilegeManager(this);
+        getServer().getScheduler().runTaskTimer(this, privilegeManager::checkExpirations, 20L * 30L, 20L * 30L);
 
         Objects.requireNonNull(getCommand("mkits")).setExecutor(this);
         Objects.requireNonNull(getCommand("mkit")).setExecutor(this);
@@ -59,7 +63,10 @@ public final class MoonKitsPlugin extends JavaPlugin implements CommandExecutor,
         CompletableFuture<User> future = luckPerms.getUserManager().loadUser(uuid);
         future.thenAccept(user -> Bukkit.getScheduler().runTask(this, () -> {
             Player player = Bukkit.getPlayer(uuid);
-            if (player != null && player.isOnline()) processAutomaticKits(user, player);
+            if (player != null && player.isOnline()) {
+                privilegeManager.handleJoin(uuid, player.getName());
+                processAutomaticKits(user, player);
+            }
         })).exceptionally(error -> {
             getLogger().warning("Не удалось загрузить LuckPerms-профиль " + uuid + ": " + error.getMessage());
             return null;
@@ -199,6 +206,29 @@ public final class MoonKitsPlugin extends JavaPlugin implements CommandExecutor,
 
     private List<String> filter(List<String> values, String prefix) {
         return values.stream().filter(value -> value.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT))).toList();
+    }
+
+
+    public LuckPerms getLuckPerms() { return luckPerms; }
+    public PrivilegeManager getPrivilegeManager() { return privilegeManager; }
+
+    public String getPrivilegeGroup(String kitId) {
+        return getConfig().getString("privileges.groups." + kitId.toLowerCase(Locale.ROOT), kitId);
+    }
+
+    public void notifyPrivilegeGranted(UUID uuid, String kitId, long durationMillis) {
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null) {
+            Kit kit = kitManager.getKit(kitId);
+            String name = kit == null ? kitId : kit.getDisplayName();
+            player.sendMessage(color("&aТебе выдана привилегия &f" + name + " &aна &f"
+                    + KitManager.formatDuration(durationMillis) + "&a."));
+        }
+    }
+
+    public void notifyPrivilegeExpired(UUID uuid) {
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null) player.sendMessage(color("&eСрок действия привилегии истёк. Тебе назначена группа player."));
     }
 
     public String msg(String key) {
