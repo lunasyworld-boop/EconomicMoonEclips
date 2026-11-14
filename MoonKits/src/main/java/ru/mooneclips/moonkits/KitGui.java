@@ -365,6 +365,7 @@ public final class KitGui implements Listener {
         String pending = pendingEdits.remove(event.getPlayer().getUniqueId());
         if (pending == null) return;
         event.setCancelled(true);
+        Player player = event.getPlayer();
         if (pending.startsWith("PRIVDUR:")) {
             String[] parts = pending.split(":", 3);
             String input = event.getMessage().trim();
@@ -386,7 +387,6 @@ public final class KitGui implements Listener {
         String id = parts[0];
         String field = parts[1];
         String value = event.getMessage().trim();
-        Player player = event.getPlayer();
         Bukkit.getScheduler().runTask(plugin, () -> {
             Kit kit = manager.getKit(id);
             if (kit == null) return;
