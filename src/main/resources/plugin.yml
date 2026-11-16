@@ -1,5 +1,5 @@
 name: EconomicMoonEclips
-version: 1.8.0
+version: 1.21.1-b
 main: ru.mooneclips.economicmooneclips.EconomicMoonEclips
 api-version: '1.21'
 depend: [Vault, Essentials]
@@ -16,6 +16,9 @@ commands:
   top:
     description: Топ игроков по балансу
     usage: /top
+  tokens:
+    description: Баланс и управление донатными токенами
+    usage: /tokens [pay|give|take|set|top]
   pmoney:
     description: Выдать деньги игроку
     usage: /pmoney <ник> <количество>
