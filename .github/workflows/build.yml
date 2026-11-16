@@ -1,6 +1,8 @@
 name: Build plugin
 on:
   push:
+    branches: [ "main", "feature/economicmooneclips-1.8.0", "feature/tokens-currency-integration" ]
+  pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 permissions:
@@ -21,6 +23,6 @@ jobs:
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: EconomicMoonEclips-1.7.0
-          path: target/EconomicMoonEclips-1.7.0.jar
+          name: EconomicMoonEclips-1.21.1-b
+          path: target/EconomicMoonEclips-1.21.1-b.jar
           if-no-files-found: error

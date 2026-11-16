@@ -1,4 +1,4 @@
-# EconomicMoonEclips 1.7.0 — Paper 1.21.4
+# EconomicMoonEclips 1.8.0 — Paper 1.21.4
 language: ru
 theme:
   prefix: "&8[&5Moon&bEclips&8] "
@@ -7,9 +7,6 @@ theme:
   accent: "&b"
 settings:
   sell-all-confirmation-seconds: 15
-  gold-mob-chance: 10.0
-  gold-mob-drop-multiplier: 3.0
-  gold-mob-ignores-rank: true
 ranks:
   stone:
     multiplier: 1.0

@@ -19,6 +19,9 @@ public final class EconomicMoonEclips extends JavaPlugin {
     private Economy economy;
     private SellManager sellManager;
     private AuctionManager auctionManager;
+    private TokensManager tokensManager;
+    private java.util.List<java.util.AbstractMap.SimpleEntry<String, Double>> topCache = java.util.List.of();
+    private long topCacheAt;
 
     @Override
     public void onEnable() {
@@ -31,18 +34,37 @@ public final class EconomicMoonEclips extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        try {
+            tokensManager = new TokensManager(getDataFolder());
+        } catch (java.sql.SQLException ex) {
+            getLogger().severe("Cannot initialize token storage: " + ex.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         sellManager = new SellManager(this, economy);
-        getServer().getPluginManager().registerEvents(new GoldMobListener(this, sellManager), this);
         auctionManager = new AuctionManager(this, economy);
         if (Bukkit.getPluginManager().getPlugin("LuckPerms") == null) {
             getLogger().warning("LuckPerms not found. Rank permissions must be provided by a permissions plugin.");
         }
-        getLogger().info("EconomicMoonEclips 1.7.0 enabled. Economy: " + economy.getName());
+        getLogger().info("EconomicMoonEclips 1.21.1-b enabled. Money: " + economy.getName() + ", Tokens: SQLite");
     }
 
     @Override
     public void onDisable() {
         if (auctionManager != null) auctionManager.close();
+        if (tokensManager != null) tokensManager.close();
+    }
+
+    public SellManager getSellManager() { return sellManager; }
+
+    public TokensManager getTokensManager() { return tokensManager; }
+
+    public long getTokens(java.util.UUID playerId) {
+        return tokensManager == null ? 0L : tokensManager.getBalance(playerId);
+    }
+
+    public boolean depositTokens(OfflinePlayer player, long amount, String reason) {
+        return tokensManager != null && tokensManager.deposit(player, amount, "API", reason);
     }
 
     private boolean setupEconomy() {
@@ -56,6 +78,9 @@ public final class EconomicMoonEclips extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String name = command.getName().toLowerCase(Locale.ROOT);
+        if (name.equals("tokens")) {
+            return handleTokensCommand(sender, args);
+        }
         if (name.equals("pmoney") || name.equals("epmoney")) {
             return handleMoneyCommand(sender, name.equals("pmoney"), args);
         }
@@ -84,16 +109,115 @@ public final class EconomicMoonEclips extends JavaPlugin {
 
     private void sendTop(CommandSender sender) {
         sender.sendMessage(color("&8&m──────── &5Moon&bEclips &8• &fТоп балансов &8&m────────"));
-        var top = java.util.Arrays.stream(Bukkit.getOfflinePlayers())
-                .filter(p -> p.getName() != null)
-                .map(p -> new java.util.AbstractMap.SimpleEntry<>(p.getName(), economy.getBalance(p)))
-                .sorted(java.util.Map.Entry.<String, Double>comparingByValue(Comparator.reverseOrder()))
-                .limit(10).toList();
+        if (System.currentTimeMillis() - topCacheAt >= 30_000L) {
+            topCache = java.util.Arrays.stream(Bukkit.getOfflinePlayers())
+                    .filter(p -> p.getName() != null)
+                    .map(p -> new java.util.AbstractMap.SimpleEntry<>(p.getName(), economy.getBalance(p)))
+                    .sorted(java.util.Map.Entry.<String, Double>comparingByValue(Comparator.reverseOrder()))
+                    .limit(10).toList();
+            topCacheAt = System.currentTimeMillis();
+        }
+        var top = topCache;
         if (top.isEmpty()) sender.sendMessage(color("&7Пока нет данных."));
         for (int i = 0; i < top.size(); i++) {
             var entry = top.get(i);
             sender.sendMessage(color("&b" + (i + 1) + ". &f" + entry.getKey()
                     + " &8— &a" + String.format(Locale.US, "%.2f", entry.getValue()) + "$"));
+        }
+    }
+
+
+    private boolean handleTokensCommand(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            if (!(sender instanceof org.bukkit.entity.Player player)) {
+                sender.sendMessage(color("&eИспользование: /tokens <ник>"));
+                return true;
+            }
+            sender.sendMessage(color("&8[&5Moon&bEclips&8] &fВаш баланс: &e✦ " + tokensManager.getBalance(player.getUniqueId())));
+            return true;
+        }
+
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        if (sub.equals("top")) {
+            sender.sendMessage(color("&8&m──────── &5Moon&bEclips &8• &fТоп токенов &8&m────────"));
+            var top = tokensManager.getTop(10);
+            if (top.isEmpty()) sender.sendMessage(color("&7Пока нет данных."));
+            for (int i = 0; i < top.size(); i++) {
+                var entry = top.get(i);
+                sender.sendMessage(color("&b" + (i + 1) + ". &f" + entry.name() + " &8— &e✦ " + entry.balance()));
+            }
+            return true;
+        }
+
+        if (sub.equals("pay")) {
+            if (!(sender instanceof org.bukkit.entity.Player player)) {
+                sender.sendMessage(color("&cКоманда доступна только игроку."));
+                return true;
+            }
+            if (args.length != 3) {
+                sender.sendMessage(color("&cИспользование: /tokens pay <игрок> <количество>"));
+                return true;
+            }
+            OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+            if (!target.isOnline() && !target.hasPlayedBefore()) {
+                sender.sendMessage(color("&cИгрок не найден."));
+                return true;
+            }
+            long amount = parseTokenAmount(args[2]);
+            if (amount <= 0) {
+                sender.sendMessage(color("&cУкажи целое положительное количество токенов."));
+                return true;
+            }
+            if (!tokensManager.transfer(player, target, amount)) {
+                sender.sendMessage(color("&cПеревод не выполнен. Проверь баланс получателя и свой баланс."));
+                return true;
+            }
+            sender.sendMessage(color("&aПереведено &e✦ " + amount + " &aигроку &f" + target.getName() + "&a."));
+            if (target.isOnline()) target.getPlayer().sendMessage(color("&aПолучено &e✦ " + amount + " &aот &f" + player.getName() + "&a."));
+            return true;
+        }
+
+        if (!sender.hasPermission("economicmooneclips.admin")) {
+            sender.sendMessage(color("&cНедостаточно прав."));
+            return true;
+        }
+        if ((sub.equals("give") || sub.equals("take") || sub.equals("set")) && args.length == 3) {
+            OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+            if (!target.isOnline() && !target.hasPlayedBefore()) {
+                sender.sendMessage(color("&cИгрок не найден."));
+                return true;
+            }
+            long amount = parseTokenAmount(args[2]);
+            if (amount < 0 || (sub.equals("give") || sub.equals("take")) && amount == 0) {
+                sender.sendMessage(color("&cУкажи целое положительное количество токенов."));
+                return true;
+            }
+            boolean success = switch (sub) {
+                case "give" -> tokensManager.deposit(target, amount, sender.getName(), "admin/case credit");
+                case "take" -> tokensManager.withdraw(target, amount, sender.getName(), "admin debit");
+                case "set" -> tokensManager.setBalance(target, amount, sender.getName());
+                default -> false;
+            };
+            if (!success) {
+                sender.sendMessage(color("&cОперация не выполнена. Возможно, недостаточно токенов или превышен лимит баланса."));
+                return true;
+            }
+            sender.sendMessage(color("&aБаланс игрока &f" + target.getName() + " &aобновлён: &e✦ " + tokensManager.getBalance(target.getUniqueId())));
+            if (target.isOnline() && sub.equals("give")) {
+                target.getPlayer().sendMessage(color("&aВам начислено &e✦ " + amount + "&a."));
+            }
+            return true;
+        }
+        sender.sendMessage(color("&cИспользование: /tokens [pay <игрок> <количество>|give <игрок> <количество>|take <игрок> <количество>|set <игрок> <количество>|top]"));
+        return true;
+    }
+
+    private long parseTokenAmount(String input) {
+        try {
+            long value = Long.parseLong(input);
+            return value >= 0 ? value : -1L;
+        } catch (NumberFormatException ex) {
+            return -1L;
         }
     }
 
