@@ -215,7 +215,7 @@ public final class EconomicMoonEclips extends JavaPlugin {
     private long parseTokenAmount(String input) {
         try {
             long value = Long.parseLong(input);
-            return value > 0 ? value : -1L;
+            return value >= 0 ? value : -1L;
         } catch (NumberFormatException ex) {
             return -1L;
         }
